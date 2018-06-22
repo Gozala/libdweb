@@ -132,8 +132,11 @@ class RandomAccessIDBFile extends RandomAccess {
   }
   static async delete(self, { offset, size }) {
     this.debug && console.log(`>> delete ${self.url} <${offset}, ${size}>`)
-    const file = self.activate()
-    await promise(file.truncate(offset))
+    const state = await this.stat(self)
+    if (offset + size > stat.size) {
+      const file = self.activate()
+      await promise(file.truncate(offset))
+    }
 
     this.debug && console.log(`<< delete ${self.url} <${offset}, ${size}>`)
   }
