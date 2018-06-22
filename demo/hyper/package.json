@@ -4,7 +4,11 @@
   "scripts": {
     "build:hyperlog": "browserify --debug src/hyperlog.js > hyper.js",
     "build:hyperdrive": "browserify --debug src/hyperdrive.js > hyper.js",
-    "demo": "env MOZ_DISABLE_CONTENT_SANDBOX=1 web-ext run --firefox=nightly --browser-console --url about:debugging"
+    "build:idb-hyperlog": "browserify --debug src/idb-hyperlog.js > hyper.js",
+    "demo": "env MOZ_DISABLE_CONTENT_SANDBOX=1 web-ext run --firefox=nightly --browser-console --url about:debugging",
+    "demo:hyperlog": "npm run build:hyperlog && npm run demo",
+    "demo:idb-hyperlog": "npm run build:idb-hyperlog && npm run demo",
+    "demo:hyperdrive": "npm run build:hyperdrive && npm run demo"
   },
   "devDependencies": {
     "browserify": "16.2.2"
