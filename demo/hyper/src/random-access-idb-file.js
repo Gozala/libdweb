@@ -36,7 +36,11 @@ class RandomAccessIDBFileVolume {
     if (file) {
       return file
     } else if (mode === "readwrite") {
-      return await promise(this.db.createMutableFile(url, "binary/random"))
+      const file = await promise(
+        this.db.createMutableFile(url, "binary/random")
+      )
+      await this.save(url, file)
+      return file
     } else {
       throw new RangeError(`File ${url} does not exist`)
     }
@@ -147,7 +151,6 @@ class RandomAccessIDBFile extends RandomAccess {
     if (lockedFile.active) {
       await promise(lockedFile.flush())
     }
-    await self.volume.save(self.url, self.file)
     this.lockedFile = null
     this.file = null
     self.debug && console.log(`<< close ${self.url}`)
@@ -168,9 +171,9 @@ class RandomAccessIDBFile extends RandomAccess {
     }
     workQueue.length = 0
     self.isIdle = true
-    if (self.file) {
-      await self.volume.save(self.url, self.file)
-    }
+    // if (self.file) {
+    //   await self.volume.save(self.url, self.file)
+    // }
   }
   static schedule(self, request) {
     self.workQueue.push(request)
