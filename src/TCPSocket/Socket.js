@@ -1052,4 +1052,402 @@ class CopierObserver {
   }
 }
 
+const streams = ({ cloneScope, wrapPromise }) => {
+  /*::
+
+  interface ReadRequest<a> {
+    resolve({done:true}|{done:false, value:a}):mixed;
+  }
+
+  interface ReadableController<a> {
+    queue:Array<a>;
+
+    close():void;
+    enqueue(a):void;
+    error(Error):void;
+
+    CancelStep(?Error):?Promise<void>;
+    PullStep():?Promise<void>;
+  }
+
+  interface ReadableDefaultController<a> extends ReadableController<a> {
+    +desiredSize:number;
+  }
+  
+  interface ReadableSource<a> {
+    start(ReadableController<a>):?Promise<void>;
+    pull(ReadableController<a>):?Promise<void>;
+    cancel(?Error):Promise<void>;
+  }
+
+  interface ReadableByteSource extends ReadableSource<ArrayBuffer> {
+    type:"bytes";
+    autoAllocateChunkSize:?number;
+  }
+
+  interface ReaderLock<a> {
+    reader:ReadableStreamDefaultReader<a>;
+    readRequests:ReadRequest<a>[];
+    resolve():mixed;
+    reject(Error):mixed;
+  }
+
+
+  type ReadableState =
+    | {status:'readable'}
+    | {status:'closed'}
+    | {status:'errored', error:Error}
+  */
+
+  class Readable /*::<a>*/ {
+    /*::
+
+    closed:Promise<?Error>
+    stream:ReadableStream<a>
+    controller:ReadableController<a>
+    lock:?ReaderLock<a>
+    state:ReadableState
+    disturbed:boolean
+    */
+    constructor(stream /*:ReadableStream<a>*/, state, lock, disturbed) {
+      this.stream = stream
+      this.state = state
+      this.lock = lock
+      this.disturbed = disturbed
+    }
+
+    get locked() {
+      return this.lock != null
+    }
+    get reader() {
+      const { lock } = this
+      return lock && lock.reader
+    }
+    getReader(options) {
+      if (this.lock != null) {
+        throw new TypeError(
+          "This stream has already been locked for exclusive reading by another reader"
+        )
+      }
+
+      const mode = options && options.mode
+      switch (mode) {
+        case undefined: {
+          return this.createDefaultReader()
+        }
+        case "byob": {
+          return this.createBYOBReader()
+        }
+        default: {
+          throw new RangeError("Invalid mode is specified")
+        }
+      }
+    }
+    cancel(reason) {
+      this.disturbed = true
+      const { state } = this
+      switch (state.status) {
+        case "closed": {
+          return voidPromise
+        }
+        case "errored": {
+          return cloneScope.Promise.reject(state.error)
+        }
+        default: {
+          return ReadableStreamCancel(this, reason)
+          // this.closeStream()
+          // return wrapPromise(this.controller.CancelStep(reason))
+        }
+      }
+    }
+    closeStream() {
+      this.state = closedState
+      const { lock } = this
+      if (lock != null) {
+        for (const { resolve } of lock.readRequests) {
+          resolve(doneIteration)
+        }
+        lock.readRequests.length = 0
+        lock.resolve()
+      }
+    }
+    releaseLock() {
+      const { lock } = this
+      if (lock) {
+        if (lock.readRequests.length > 0) {
+          throw new TypeError(
+            "Tried to release a reader lock when that reader has pending read() calls un-settled"
+          )
+        }
+
+        if (this.state === "readable") {
+          lock.reject(
+            new TypeError(
+              "Reader was released and can no longer be used to monitor the stream's closedness"
+            )
+          )
+        }
+
+        readables.delete(lock.reader)
+        this.lock = null
+      }
+    }
+    read() {
+      this.disturbed = true
+      const { state } = this
+      switch (state.status) {
+        case "closed":
+          return doneIterationPromise
+        case "errored":
+          return cloneScope.Promise.reject(state.error)
+        case "readable":
+          return wrapPromise(this.controller.PullStep())
+        default:
+          throw RangeError(`Invalid stream state: ${state.status}`)
+      }
+    }
+
+    createDefaultReader() {
+      const reader = exportInstance(cloneScope, ReadableStreamDefaultReader)
+      const closed = new cloneScope.Promise((resolve, reject) => {
+        this.lock = { reader, resolve, reject, readRequests: [] }
+      })
+      readables.set(reader, this)
+      const unwrappedReader = Cu.waiveXrays(reader)
+      Reflect.set(unwrappedReader, "closed", { value: closed })
+      return reader
+    }
+    createBYOBReader() {}
+
+    static for(source /*:ReadableStream<a>|ReadableStreamDefaultReader<a>*/) {
+      const state = readables.get(source)
+      if (state == null) {
+        throw TypeError("Unable to find ReadableStream state")
+      } else {
+        return state
+      }
+    }
+
+    static createStream(source, strategy) {
+      const stream = exportInstance(cloneScope, ReadableStream)
+      const readable = new Readable(stream, readableState, null, false)
+      const controler = this.createByteStreamController(
+        readable,
+        source,
+        strategy
+      )
+      readables.set(stream, readable)
+      return stream
+    }
+    static createByteStreamController(readable, source, strategy) {
+      const controller = new ReadableByteStreamController()
+      controller.readable = readable
+      // controller.source = source
+      // controller.strategy = strategy
+      return controller
+    }
+  }
+  const readables = new WeakMap()
+
+  class ReadableByteStreamController {
+    /*::
+    readable:Readable<ArrayBuffer>
+    size:number
+    limit:number
+    */
+    enqueue(buffer /*:ArrayBuffer*/) {
+      const { state } = this.readable
+      switch (state.status) {
+        case "readable": {
+          const { byteLength } = buffer
+          const byteOffset = 0
+        }
+        default: {
+          throw new TypeError(
+            `The stream (in ${
+              state.status
+            } state) is not in the readable state and cannot be enqueued to`
+          )
+        }
+      }
+    }
+    CancelSteps(error) {}
+    PullSteps() {}
+  }
+
+  class ReadableStreamDefaultController /*::<a> implements ReadableDefaultController<a>*/ {
+    /*::
+    size:number;
+    limit:number;
+    closeRequested:boolean;
+    readable:Readable<a>;
+    queue:a[];
+    */
+    get desiredSize() {
+      return ReadableStreamDefaultControllerGetDesiredSize(this)
+    }
+    enqueue(chunk) {}
+    error(reason) {}
+    close() {
+      if (!ReadableStreamDefaultControllerCanCloseOrEnqueue(this)) {
+        throw new TypeError("The stream is not in a state that permits close")
+      }
+
+      ReadableStreamDefaultControllerClose(this)
+    }
+
+    CancelStep(error /*:?Error*/) /*:?Promise<void>*/ {}
+    PullStep() /*:?Promise<void>*/ {}
+  }
+
+  const ReadableStream = exportClass(
+    cloneScope,
+    class ReadableStream /*::<a>*/ {
+      /*::
+      */
+      constructor() {
+        throw TypeError("Illegal constructor")
+      }
+      get locked() {
+        return Readable.for(this).locked
+      }
+      cancel(reason) {
+        const readable = Readable.for(this)
+        if (readable.locked) {
+          return unableToCancelLocked
+        } else {
+          return ReadableStreamCancel(readable, reason)
+        }
+      }
+      getReader(config) {
+        return Readable.for(this).getReader(config)
+      }
+      pipeThrough() {
+        return new ExtensionError(
+          "ReadableStream pipeThrough is not implemented"
+        )
+      }
+      pipeTo() {
+        return new ExtensionError("ReadableStream pipeTo is not implemented")
+      }
+      tee() {
+        return new ExtensionError("ReadableStream pipeTo is not implemented")
+      }
+    }
+  )
+
+  const ReadableStreamDefaultReader = exportClass(
+    cloneScope,
+    class ReadableStreamDefaultReader /*::<a>*/ {
+      /*::
+      closed:Promise<?Error>
+      */
+      constructor() {
+        throw TypeError("Illegal constructor")
+      }
+      cancel(reason) {
+        const readable = Readable.for(this)
+        if (readable.reader === this) {
+          return readable.cancel(reason)
+        } else {
+          throw readerLockException("cancel")
+        }
+      }
+      read() {
+        const readable = Readable.for(this)
+        if (readable.reader === this) {
+          return readable.read()
+        } else {
+          throw readerLockException("read from")
+        }
+      }
+      releaseLock() {
+        const readable = Readable.for(this)
+        if (readable.reader === this) {
+          return readable.releaseLock()
+        }
+      }
+    }
+  )
+
+  const ReadableStreamDefaultControllerGetDesiredSize = controller => {
+    const { readable } = controller
+    const { state } = readable
+    switch (state.status) {
+      case "errored":
+        return 0
+      case "closed":
+        return 0
+      default:
+        return controller.limit - controller.size
+    }
+  }
+
+  const ReadableStreamDefaultControllerCanCloseOrEnqueue = controller =>
+    controller.closeRequested === false &&
+    controller.readable.state.status === "readable"
+
+  const ReadableStreamDefaultControllerClose = /*::<a>*/ (
+    controller /*:ReadableStreamDefaultController<a>*/
+  ) => {
+    controller.closeRequested = true
+    if (controller.queue.length === 0) {
+      ReadableStreamClose(controller.readable)
+    }
+  }
+
+  const ReadableStreamClose = /*::<a>*/ (readable /*:Readable<a>*/) => {
+    readable.state = closedState
+    const { lock } = readable
+    if (lock) {
+      for (const request of lock.readRequests) {
+        request.resolve(doneIteration)
+      }
+
+      lock.readRequests.length = 0
+      defaultReaderClosedPromiseResolve(lock)
+    }
+  }
+
+  const ReadableStreamCancel = /*::<a>*/ (
+    readable /*:Readable<a>*/,
+    reason /*:?Error*/
+  ) /*:Promise<void>*/ => {
+    readable.disturbed = true
+    const { state, controller } = readable
+    switch (state.status) {
+      case "closed": {
+        return voidPromise
+      }
+      case "errored": {
+        return cloneScope.Promise.reject(state.error)
+      }
+      default: {
+        ReadableStreamClose(readable)
+        return wrapPromise(controller.CancelStep(reason))
+      }
+    }
+  }
+
+  const defaultReaderClosedPromiseResolve = /*::<a>*/ (
+    lock /*:ReaderLock<a>*/
+  ) => {
+    lock.resolve()
+    delete lock.resolve
+    delete lock.reject
+  }
+
+  const readerLockException = name =>
+    new ExtensionError(`Cannot ${name} a stream using a released reader`)
+
+  const doneIteration = Cu.cloneInto({ done: true }, cloneScope)
+  const voidPromise = cloneScope.Promise.resolve()
+  const doneIterationPromise = cloneScope.Promise.resolve(doneIteration)
+  const unableToCancelLocked = cloneScope.Promise.reject(
+    new ExtensionError("Cannot cancel a stream that already has a reader")
+  )
+  const closedState = { status: "closed" }
+  const readableState = { status: "readable" }
+}
+
 const debug = true
