@@ -31,6 +31,17 @@ browser.protocol.registerProtocol("dweb", request => {
         })()
       }
     }
+    case "dweb://api/": {
+      return {
+        content: (async function*() {
+          const encoder = new TextEncoder("utf-8")
+          yield encoder.encode("<h1>API</h1>").buffer
+          yield encoder.encode(
+            `<iframe src="moz-extension://3aaeb329-ec20-0846-aa43-aa00a2d393e6/api.html" sandbox></iframe>`
+          ).buffer
+        })()
+      }
+    }
     default: {
       return {
         contentType: "text/html",

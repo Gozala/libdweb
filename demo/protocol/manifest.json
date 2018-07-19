@@ -4,23 +4,35 @@
   "name": "protocol@libdweb",
   "description": "Extension containing libdweb protocol API",
   "permissions": [],
+  "applications": {
+    "gecko": {
+      "id": "@libdweb-protocol-demo"
+    }
+  },
 
   "experiment_apis": {
     "protocol": {
-      "schema": "../../src/protocol/protocol.json",
+      "schema": "modules/libdweb/src/protocol/protocol.json",
       "child": {
         "scopes": ["addon_child"],
         "paths": [["protocol"]],
-        "script": "../../src/protocol/client.js"
+        "script": "modules/libdweb/src/protocol/client.js"
       },
       "parent": {
         "events": ["startup"],
         "scopes": ["addon_parent"],
         "paths": [["protocol"]],
-        "script": "../../src/protocol/host.js"
+        "script": "modules/libdweb/src/protocol/host.js"
       }
     }
   },
+  "protocol_handlers": [
+    {
+      "protocol": "ext+dweb",
+      "name": "dweb protocol",
+      "uriTemplate": "/api.html#!/%s"
+    }
+  ],
   "background": {
     "scripts": ["protocol.js"]
   },

@@ -1,0 +1,12 @@
+{
+  "name": "@libdweb/protocol-api-demo",
+  "scripts": {
+    "start": "cross-env MOZ_DISABLE_CONTENT_SANDBOX=1 web-ext run --firefox=nightly --browser-console --url about:debugging"
+  },
+  "dependencies": {
+    "libdweb": "https://github.com/mozilla/libdweb.git"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0"
+  }
+}
