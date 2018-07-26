@@ -35,7 +35,6 @@
     "rollup.config.flow": "1.1.0",
     "selenium-webdriver": "4.0.0-alpha.1",
     "source-map-support": "0.5.6",
-    "tail": "1.2.4",
     "tap-finished": "0.0.1",
     "web-ext": "2.7.0"
   },

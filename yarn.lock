@@ -7521,10 +7521,6 @@ table@^3.7.8:
     slice-ansi "0.0.4"
     string-width "^2.0.0"
 
-tail@1.2.4:
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/tail/-/tail-1.2.4.tgz#0877f3123258fd6e65320c0b27097a1343c2add1"
-
 tap-finished@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/tap-finished/-/tap-finished-0.0.1.tgz#08b5b543fdc04830290c6c561279552e71c4bd67"
