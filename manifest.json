@@ -20,12 +20,17 @@
         "script": "./src/protocol/host.js"
       }
     },
-    "mdns": {
-      "schema": "./src/mdns/mdns.json",
+    "ServiceDiscovery": {
+      "schema": "./src/ServiceDiscovery/ServiceDiscovery.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["ServiceDiscovery"]],
+        "script": "./src/ServiceDiscovery/client.js"
+      },
       "parent": {
         "scopes": ["addon_parent"],
-        "paths": [["mdns"]],
-        "script": "./src/mdns/mdns.js"
+        "paths": [["ServiceDiscovery"]],
+        "script": "./src/ServiceDiscovery/host.js"
       }
     },
     "FileSystem": {
