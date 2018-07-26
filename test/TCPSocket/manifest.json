@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "version": "0.1",
-  "name": "tcp@libdweb",
-  "description": "Extension containing libdweb TCPSocket API",
+  "name": "test-tcp@libdweb",
+  "description": "TCPSocket API tests",
   "permissions": [],
 
   "experiment_apis": {
