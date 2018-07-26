@@ -1,0 +1,71 @@
+{
+  "manifest_version": 2,
+  "version": "0.1",
+  "name": "libdweb API tests",
+  "description": "test libdweb APIs",
+
+  "experiment_apis": {
+    "test": {
+      "schema": "../../src/test/test.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["test"]],
+        "script": "../../src/test/test.js"
+      }
+    },
+    "TCPSocket": {
+      "schema": "../../src/TCPSocket/TCPSocket.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["TCPSocket"]],
+        "script": "../../src/TCPSocket/Socket.js"
+      }
+    },
+    "protocol": {
+      "schema": "../../src/protocol/protocol.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["protocol"]],
+        "script": "../../src/protocol/client.js"
+      },
+      "parent": {
+        "events": ["startup"],
+        "scopes": ["addon_parent"],
+        "paths": [["protocol"]],
+        "script": "../../src/protocol/host.js"
+      }
+    },
+    "ServiceDiscovery": {
+      "schema": "../../src/ServiceDiscovery/ServiceDiscovery.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["ServiceDiscovery"]],
+        "script": "../../src/ServiceDiscovery/client.js"
+      },
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["ServiceDiscovery"]],
+        "script": "../../src/ServiceDiscovery/host.js"
+      }
+    },
+    "FileSystem": {
+      "schema": "../../src/FileSystem/FileSystem.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["FileSystem"]],
+        "script": "../../src/FileSystem/host.js"
+      }
+    },
+    "UDPSocket": {
+      "schema": "../../src/UDPSocket/UDPSocket.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["UDPSocket"]],
+        "script": "../../src/UDPSocket/Socket.js"
+      }
+    }
+  },
+  "background": {
+    "scripts": ["test.js"]
+  }
+}

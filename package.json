@@ -40,10 +40,11 @@
     "web-ext": "2.7.0"
   },
   "scripts": {
-    "test": "npm run test:flow && npm run test:tcp",
+    "test": "npm run test:flow && npm run test:api && npm run test:tcp",
     "test:tape": "HEADLESS=1 node test/setup.js test/tape",
     "test:flow": "flow check",
     "test:tcp": "HEADLESS=1 node test/setup.js test/TCPSocket",
+    "test:api": "HEADLESS=1 node test/setup.js test/API",
     "//build:clear": "rm -rf lib",
     "//build:types": "flow-copy-source --verbose src lib",
     "//build:umd": "BABEL_ENV=umd rollup -c --files libdweb",
