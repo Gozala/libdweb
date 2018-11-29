@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "version": "0.1",
+  "name": "tcp@libdweb",
+  "description": "Extension containing libdweb TCPSocket API",
+  "permissions": [],
+
+  "experiment_apis": {
+    "TCPSocket": {
+      "schema": "../../src/TCPSocket/TCPSocket.json",
+      "child": {
+        "scopes": ["addon_child"],
+        "paths": [["TCPSocket"]],
+        "script": "../../src/TCPSocket/Socket.js"
+      }
+    }
+  },
+  "icons": {
+    "48": "../discovery/logo-flyweb-grey.svg",
+    "96": "../discovery/logo-flyweb-grey.svg"
+  },
+  "background": {
+    "scripts": ["main.js"]
+  }
+}
